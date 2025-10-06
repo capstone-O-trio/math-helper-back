@@ -17,15 +17,15 @@ spring:
         hbm2ddl:
           auto: update
         default_batch_fetch_size: 1000
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
 openai:
   model: gpt-4o
   secret-key: ${API_KEY}
 
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 100MB
-      max-request-size: 500MB
+
 server:
   port: 8080
   address: 0.0.0.0
@@ -43,3 +43,17 @@ swagger:
 logging.level:
   org.hibernate.SQL: debug
   #  org.hibernate.type: trace
+
+cloud:
+  aws:
+    s3:
+      bucket: capmath
+      path:
+        quiz: quiz
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY_ID}
+      secretKey: ${AWS_SECRET_ACCESS_KEY}
