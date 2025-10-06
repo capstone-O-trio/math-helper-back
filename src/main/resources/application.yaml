@@ -17,7 +17,9 @@ spring:
         hbm2ddl:
           auto: update
         default_batch_fetch_size: 1000
-
+openai:
+  model: gpt-4o
+  secret-key: ${API_KEY}
 
   servlet:
     multipart:
