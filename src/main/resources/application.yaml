@@ -17,3 +17,24 @@ spring:
         hbm2ddl:
           auto: update
         default_batch_fetch_size: 1000
+
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 500MB
+server:
+  port: 8080
+  address: 0.0.0.0
+
+spring-doc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: method
+
+swagger:
+  tag:
+    auth: '01. 로그인/회원가입'
+    math-quiz: '02. 수학문제'
+    test: 'A. Test API'
