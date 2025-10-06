@@ -1,9 +1,6 @@
 package cap.math.dto.user;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -15,5 +12,15 @@ public class UserResponseDTO {
     public static class JoinResultDto{
         Long userId;
         LocalDateTime createdAt;
+    }
+
+    @Data
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LoginResponse {
+        private String accessToken;
+        private String refreshToken;
     }
 }

@@ -38,3 +38,6 @@ swagger:
     auth: '01. 로그인/회원가입'
     math-quiz: '02. 수학문제'
     test: 'A. Test API'
+logging.level:
+  org.hibernate.SQL: debug
+  #  org.hibernate.type: trace

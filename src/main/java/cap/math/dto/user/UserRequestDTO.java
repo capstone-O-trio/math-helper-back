@@ -8,4 +8,10 @@ public class UserRequestDTO {
         String name;
         String password;
     }
+
+    @Getter
+    public static class loginDto{
+        String name;
+        String password;
+    }
 }

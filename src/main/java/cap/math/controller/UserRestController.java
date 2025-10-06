@@ -26,4 +26,11 @@ public class UserRestController {
         User user=userService.joinUser(request);
         return ApiResponse.onSuccess(UserConverter.toJoinResultDTO(user));
     }
+
+    @PostMapping("/login")
+    public ApiResponse<UserResponseDTO.LoginResponse> login(@RequestBody @Valid UserRequestDTO.loginDto request){
+        UserResponseDTO.LoginResponse validated=userService.validateUser(request);
+        return ApiResponse.onSuccess(validated);
+    }
+
 }
