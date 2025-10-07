@@ -32,6 +32,7 @@ public enum ErrorStatus implements BaseErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4041", "존재하지 않는 유저 정보입니다"),
     EMAIL_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4001", "이미 존재하는 유저입니다."),
 
+    MATH_NOT_FOUND(HttpStatus.NOT_FOUND, "MATH4001", "존재하지 않는 수학문제 정보입니다."),
 
     // 기타 에러
     JSON_PARSING_ERROR(HttpStatus.BAD_REQUEST, "JSON4001", "JSON 파싱이 잘못되었습니다."),
