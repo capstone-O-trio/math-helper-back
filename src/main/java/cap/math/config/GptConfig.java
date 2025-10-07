@@ -1,8 +1,15 @@
 package cap.math.config;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Getter
+@Setter
+@Component
+@ConfigurationProperties(prefix = "gpt")
 public class GptConfig {
 
     @Value("${openai.secret-key}")
@@ -11,11 +18,4 @@ public class GptConfig {
     @Value("${openai.model}")
     private String model;
 
-    public String getSecretKey() {
-        return secretKey;
-    }
-
-    public String getModel() {
-        return model;
-    }
 }

@@ -33,17 +33,9 @@ public class MathController {
     public ApiResponse<MathResponseDTO.crerateMathDto> createMath(@AuthenticationPrincipal String userName, @RequestParam("imageFile") MultipartFile image){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
-        Math math= mathService.createMath(user,"image",image);
-        MathResponseDTO.crerateMathDto response=MathConverter.toCrerateMathDto(math);
+        MathResponseDTO.crerateMathDto math= mathService.createMath(user,"image",image);
 
+        return ApiResponse.onSuccess(math);
+    }
 
-        return ApiResponse.onSuccess(response);
-    }
-    @PostMapping(value="/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary="이미지 업로드 API",
-            description = "이미지 업로드 API")
-    public ApiResponse<String> uploadImage(@RequestParam("imageFile") MultipartFile image){
-        String imageUrl = mathService.uploadImage("image", image);
-        return ApiResponse.onSuccess(imageUrl);
-    }
 }

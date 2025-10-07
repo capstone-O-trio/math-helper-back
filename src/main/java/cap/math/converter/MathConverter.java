@@ -9,12 +9,5 @@ import cap.math.dto.user.UserResponseDTO;
 import java.time.LocalDateTime;
 
 public class MathConverter {
-    public static MathResponseDTO.crerateMathDto toCrerateMathDto(Math math){
-        return MathResponseDTO.crerateMathDto.builder()
-                .mathId(math.getId())
-                .image(math.getImage())
-                .answer(math.getAnswer())
-                .build();
 
-    }
 }

@@ -21,6 +21,11 @@ public class Math extends BaseEntity {
 
     private Integer answer;
 
+    private String problem;
+
+    @ElementCollection
+    private List<Integer> wrongAnswers;
+
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="user_id")
     private User user;

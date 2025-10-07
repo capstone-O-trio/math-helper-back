@@ -10,8 +10,8 @@ public class UserResponseDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class JoinResultDto{
-        Long userId;
-        LocalDateTime createdAt;
+        private Long userId;
+        private LocalDateTime createdAt;
     }
 
     @Data
