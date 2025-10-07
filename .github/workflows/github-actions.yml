@@ -1,0 +1,96 @@
+# github repository actions 페이지에 나타날 이름
+name: CI/CD using github actions & docker
+
+# event trigger
+# main이나 develop 브랜치에 push가 되었을 때 실행#
+on:
+  push:
+    branches: [ "develop" ]
+
+permissions:
+  contents: read
+
+jobs:
+  CI-CD:
+    runs-on: ubuntu-latest
+    steps:
+
+      # JDK setting - github actions에서 사용할 JDK 설정 (프로젝트나 AWS의 java 버전과 달라도 무방)#
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # gradle caching - 빌드 시간 향상#
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Set yml file
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: 'src/main/resources/application.yml'
+        env:
+          #          spring.datasource.url: ${{ secrets.MYSQL_URL }}
+          spring.datasource.username: ${{ secrets.MYSQL_USER }}
+          spring.datasource.password: ${{ secrets.MYSQL_PW }}
+          cloud.aws.credentials.access-key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          cloud.aws.credentials.secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+
+
+      # shell: bash
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x ./gradlew
+
+      # gradle build
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+
+      # docker build & push to develop##
+      - name: Docker build & push to dev
+        if: contains(github.ref, 'develop')
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker build -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/capmath:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/capmath:latest
+      
+
+      # deploy to develop
+      - name: Deploy to dev
+        uses: appleboy/ssh-action@master
+        id: deploy-dev
+        if: contains(github.ref, 'develop')
+        with:
+          host: ${{ secrets.HOST_DEV }} ## EC2 퍼블릭 IPv4 DNS
+          username: ubuntu #ubuntu
+          port: 22
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            #           Stop and remove existing container
+                    sudo docker stop capmath || true
+                    sudo docker rm capmath || true
+                    sudo docker image rm ${{ secrets.DOCKER_USERNAME }}/capmath || true
+            
+            # Pull the latest image
+                    sudo docker pull ${{ secrets.DOCKER_USERNAME }}/capmath || exit 1
+            # Run the new container
+                    sudo docker run -d --name capmath \
+                    -p 8080:8080 \
+                    -e DB_URL=capmathdb.ch0e6swk0aar.ap-northeast-2.rds.amazonaws.com \
+                    -e DB_USERNAME=${{ secrets.MYSQL_USER }} \
+                    -e DB_PASSWORD=${{ secrets.MYSQL_PW }} \
+                    -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+                    -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+                    ${{ secrets.DOCKER_USERNAME }}/capmath
+            # Clean up unused images
+                    sudo docker image prune -f
+            # Check logs
+                    sudo docker logs capmath
