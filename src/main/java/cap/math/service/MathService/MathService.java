@@ -7,6 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface MathService {
     MathResponseDTO.crerateMathDto createMath(User user, String directory, MultipartFile image);
-
+    MathResponseDTO.crerateMathDto getMath (Long mathId);
 
 }

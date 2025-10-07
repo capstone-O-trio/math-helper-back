@@ -27,10 +27,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static cap.math.apiPayload.code.status.ErrorStatus.JSON_PARSING_ERROR;
-import static cap.math.apiPayload.code.status.ErrorStatus._BAD_REQUEST;
+import static cap.math.apiPayload.code.status.ErrorStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -92,6 +92,38 @@ public class MathServiceImpl implements MathService {
                 .build();
 
         return mathResponse;
+    }
+    @Override
+    @Transactional
+    public MathResponseDTO.crerateMathDto getMath (Long mathId){
+        Math math=mathRepository.findById(mathId)
+                .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        List<MathEntity> entities=mathEntityRepository.findALLByMathId(mathId);
+
+        if (entities.size() < 2) {
+            throw new RuntimeException("엔티티가 2개 이상이어야 합니다.");
+        }
+
+        MathEntity e1 = entities.get(0);
+        MathEntity e2 = entities.get(1);
+
+        MathResponseDTO.mathProblemDto problemDto=MathResponseDTO.mathProblemDto.builder()
+                .problem(math.getProblem())
+                .entity(e1.getEntity())
+                .count1(e1.getCount())
+                .count2(e2.getCount())
+                .answer(math.getAnswer())
+                .wrongAnswers(math.getWrongAnswers())
+                .build();
+
+        MathResponseDTO.crerateMathDto mathResponse=MathResponseDTO.crerateMathDto.builder()
+                .mathId(math.getId())
+                .image(math.getImage())
+                .mathProblemDto(problemDto)
+                .build();
+        return mathResponse;
+
+
     }
 
     public String generatePrompt( String imageUrl) {
