@@ -8,15 +8,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy; // 이 import가 필요합니다.
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -35,7 +40,7 @@ public class SecurityConfig {
 
                 // 3. HTTP 요청에 대한 인가 규칙 설정
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/users/login/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // 특정 경로는 모두 허용
+                        .requestMatchers("/**","/users/login/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // 특정 경로는 모두 허용
                         .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
                 )
 
@@ -44,7 +49,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
     public static class JwtFilter extends OncePerRequestFilter {
 
         private final JwtUtil jwtUtil;

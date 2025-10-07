@@ -17,7 +17,7 @@ public class MathEntity extends BaseEntity{
     private String image;
 
     @Column(nullable = false, length = 30)
-    private String name;
+    private String entity;
 
     private Integer count;
 
