@@ -96,7 +96,8 @@ public class MathServiceImpl implements MathService {
 
     public String generatePrompt( String imageUrl) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("이 사진은 초등학교 1학년 수학 문제야. 아래와 같은 JSON 형식으로 문제를 정리해줘.\n")
+        prompt.append("이미지 주소: ").append(imageUrl).append("\n")
+                .append("이 사진은 초등학교 1학년 수학 문제야. 사진 정확히 읽고 정확하게 문제 추출해줘. 아래와 같은 JSON 형식으로 문제를 정리해줘.\n")
                 .append("항상 'entity'는 \"apple\"로 고정하고,\n")
                 .append("'wrongAnswers'에는 정답과 비슷한 숫자 두 개를 배열로 넣어줘.\n")
                 .append("설명 없이 JSON만 출력해줘. 아래는 '2+3은 무엇일까요?'문제였을때 나오는 데이터에 대한 예시를 든거야. 반드시 아래 형식처럼 작성해:\n\n")
@@ -109,7 +110,6 @@ public class MathServiceImpl implements MathService {
                 .append("  \"wrongAnswers\": [4, 6]\n")
                 .append("}\n")
                 .append("\n")
-                .append("이미지 주소: ").append(imageUrl).append("\n")
                 .append("Please respond only with the JSON.");
 
         return prompt.toString();
