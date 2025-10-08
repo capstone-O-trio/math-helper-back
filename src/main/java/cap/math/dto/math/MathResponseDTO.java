@@ -1,5 +1,6 @@
 package cap.math.dto.math;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +32,16 @@ public class MathResponseDTO {
         private int count2;
         private int answer;
         private List<Integer> wrongAnswers;
+    }
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class getAnswerDto{
+        private Long mathId;
+        private int answer;
+        private int wrongAnswer1;
+        private int wrongAnswer2;
     }
 
 }
