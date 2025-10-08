@@ -31,6 +31,8 @@ public class MathController {
     private final MathRepository mathRepository;
 
     @PostMapping(value="/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary="사진 촬영 API",
+            description="수학문제 사진 업로드 시, GPT로부터 수학문제에 대한 정보를 JSON 데이터로 받아옵니다.")
     public ApiResponse<MathResponseDTO.crerateMathDto> createMath(@AuthenticationPrincipal String userName, @RequestParam("imageFile") MultipartFile image){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
@@ -40,6 +42,8 @@ public class MathController {
     }
 
     @GetMapping(value="/quiz/{mathId}")
+    @Operation(summary="문제 풀기 API",
+            description="수학문제 ID 입력 시, JSON 데이터을 추출합니다.")
     public ApiResponse<MathResponseDTO.crerateMathDto> getMath(@AuthenticationPrincipal String userName,@PathVariable Long mathId){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
@@ -49,6 +53,8 @@ public class MathController {
     }
 
     @GetMapping(value="/images/{mathId}")
+    @Operation(summary="사진 확인 API",
+            description="수학문제 ID 입력 시, 해당 문제에 대한 이미지 URL을 추출합니다.")
     public ApiResponse<String> getImage(@AuthenticationPrincipal String userName,@PathVariable Long mathId){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
@@ -57,6 +63,8 @@ public class MathController {
     }
 
     @GetMapping(value="/answers/{mathId}")
+    @Operation(summary="정답 확인 API",
+            description="수학문제 ID 입력하고 정답을 입력하면, 정오답을 판별합니다.")
     public ApiResponse<String> getAnswer(@AuthenticationPrincipal String userName,@PathVariable Long mathId, @RequestParam Integer answer){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
@@ -65,6 +73,8 @@ public class MathController {
     }
 
     @GetMapping(value="/randoms/{mathId}")
+    @Operation(summary="정오답 보기 API",
+            description="수학문제 ID 입력 시, 정답과 오답 2개를 추출합니다.")
     public ApiResponse<MathResponseDTO.getAnswerDto> getRandom(@AuthenticationPrincipal String userName,@PathVariable Long mathId){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
