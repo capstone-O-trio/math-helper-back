@@ -48,4 +48,28 @@ public class MathController {
 
     }
 
+    @GetMapping(value="/images/{mathId}")
+    public ApiResponse<String> getImage(@AuthenticationPrincipal String userName,@PathVariable Long mathId){
+        User user=userRepository.findByName(userName)
+                .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
+        String response=mathService.getImage(mathId);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping(value="/answers/{mathId}")
+    public ApiResponse<String> getAnswer(@AuthenticationPrincipal String userName,@PathVariable Long mathId, @RequestParam Integer answer){
+        User user=userRepository.findByName(userName)
+                .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
+        String response=mathService.getAnswer(mathId, answer);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping(value="/randoms/{mathId}")
+    public ApiResponse<MathResponseDTO.getAnswerDto> getRandom(@AuthenticationPrincipal String userName,@PathVariable Long mathId){
+        User user=userRepository.findByName(userName)
+                .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
+        MathResponseDTO.getAnswerDto response=mathService.getRandom(mathId);
+        return ApiResponse.onSuccess(response);
+    }
+
 }

@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static cap.math.apiPayload.code.status.ErrorStatus.*;
 
@@ -123,6 +124,37 @@ public class MathServiceImpl implements MathService {
                 .build();
         return mathResponse;
 
+
+    }
+
+    public String getImage (Long mathId){
+        Math math=mathRepository.findById(mathId)
+                .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+
+        return math.getImage();
+    }
+    public String getAnswer (Long mathId, Integer answer){
+        Math math=mathRepository.findById(mathId)
+                .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        if(Objects.equals(math.getAnswer(), answer)){
+            return "정답입니다.";
+        }
+        else{
+            return "오답입니다.";
+        }
+    }
+
+    public MathResponseDTO.getAnswerDto getRandom(Long mathId){
+        Math math=mathRepository.findById(mathId)
+                .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        List<Integer> wrongAnswers = math.getWrongAnswers();
+
+        return MathResponseDTO.getAnswerDto.builder()
+                .answer(math.getAnswer())
+                .mathId(mathId)
+                .wrongAnswer1(wrongAnswers.get(0))
+                .wrongAnswer2(wrongAnswers.get(1))
+                .build();
 
     }
 
