@@ -40,7 +40,7 @@ public class SecurityConfig {
 
                 // 3. HTTP 요청에 대한 인가 규칙 설정
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/**","/users/login/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // 특정 경로는 모두 허용
+                        .requestMatchers("/**","/users/login/**","/users/signup/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // 특정 경로는 모두 허용
                         .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
                 )
 
