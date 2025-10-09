@@ -158,13 +158,16 @@ public class MathServiceImpl implements MathService {
 
     }
 
-    public String generatePrompt( String imageUrl) {
+    public String generatePrompt(String imageUrl) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("이미지 주소: ").append(imageUrl).append("\n")
-                .append("이 사진은 초등학교 1학년 수학 문제야. 사진 정확히 읽고 정확하게 문제 추출해줘. 아래와 같은 JSON 형식으로 문제를 정리해줘.\n")
-                .append("항상 'entity'는 \"apple\"로 고정하고,\n")
-                .append("'wrongAnswers'에는 정답과 비슷한 숫자 두 개를 배열로 넣어줘.\n")
-                .append("설명 없이 JSON만 출력해줘. 아래는 '2+3은 무엇일까요?'문제였을때 나오는 데이터에 대한 예시를 든거야. 반드시 아래 형식처럼 작성해:\n\n")
+                .append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
+                .append("1. 먼저 이미지를 자세히 보고, 글자뿐 아니라 그림(사과 개수 등)으로 표현된 수량이 있으면 읽어줘.\n")
+                .append("2. 문제의 핵심 연산이 덧셈인지 뺄셈인지 판단하고, 문제의 수식 형태(예: 2+3)를 명확히 구성해. 숫자 제발 다시 정확하게 봐. 텍스트 추출 잘해.\n")
+                .append("3. JSON은 반드시 아래 예시 형식으로 출력하고, 설명이나 추가 문장은 절대 쓰지 마.\n")
+                .append("4. 'entity'는 항상 'apple'로 고정.\n")
+                .append("5. 'wrongAnswers'는 정답과 1~2 차이 나는 숫자 두 개로 만들어.\n\n")
+                .append("출력 형식 예시:\n")
                 .append("{\n")
                 .append("  \"problem\": \"2+3\",\n")
                 .append("  \"entity\": \"apple\",\n")
@@ -172,12 +175,12 @@ public class MathServiceImpl implements MathService {
                 .append("  \"count2\": 3,\n")
                 .append("  \"answer\": 5,\n")
                 .append("  \"wrongAnswers\": [4, 6]\n")
-                .append("}\n")
-                .append("\n")
-                .append("Please respond only with the JSON.");
+                .append("}\n\n")
+                .append("지금부터 이미지를 분석하고 위 JSON만 정확히 출력해. 그 외 설명은 쓰지 마.");
 
         return prompt.toString();
     }
+
 
     public String callOpenAI(String prompt, int maxTokens) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
