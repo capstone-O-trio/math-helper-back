@@ -7,6 +7,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface MathRepository extends JpaRepository<Math, Long> {
-    Optional<Math> findFirstByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(Long userId, LocalDateTime afterTime);
+    Optional<Math> findFirstByUserIdAndIsCheckedFalseOrderByCreatedAtDesc(Long userId);
 
 }
