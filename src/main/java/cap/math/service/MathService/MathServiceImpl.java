@@ -150,7 +150,6 @@ public class MathServiceImpl implements MathService {
     public MathResponseDTO.crerateMathDto getNew(Long userId) {
         return mathRepository.findFirstByUserIdAndIsCheckedFalseOrderByCreatedAtDesc(userId)
                 .map(math -> {
-                    math.setIsChecked(true);
                     List<MathEntity> entities = mathEntityRepository.findALLByMathId(math.getId());
                     return MathConverter.toCreateMathDto(math, entities);
                 })
