@@ -161,7 +161,7 @@ public class MathServiceImpl implements MathService {
         StringBuilder prompt = new StringBuilder();
         prompt.append("이미지 주소: ").append(imageUrl).append("\n")
                 .append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
-                .append("1. 먼저 이미지를 자세히 보고, 글자뿐 아니라 그림(사과 개수 등)으로 표현된 수량이 있으면 읽어줘.\n")
+                .append("1. 먼저 이미지를 자세히 보고, 글자뿐 아니라 그림(사과 개수 등)으로 표현된 수량이 있으면 텍스트 변환해서 '4+5'처럼 이 형식으로 읽어줘.\n")
                 .append("2. 문제의 핵심 연산이 덧셈인지 뺄셈인지 판단하고, 문제의 수식 형태(예: 2+3)를 명확히 구성해. 숫자 제발 다시 정확하게 봐. 텍스트 추출 잘해.\n")
                 .append("3. JSON은 반드시 아래 예시 형식으로 출력하고, 설명이나 추가 문장은 절대 쓰지 마.\n")
                 .append("4. 'entity'는 항상 'apple'로 고정.\n")
