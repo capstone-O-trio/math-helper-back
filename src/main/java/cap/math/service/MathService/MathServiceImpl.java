@@ -6,6 +6,7 @@ import cap.math.apiPayload.exception.handler.TempHandler;
 import cap.math.aws.s3.AmazonS3Manager;
 
 import cap.math.config.GptConfig;
+import cap.math.converter.MathConverter;
 import cap.math.domain.Math;
 import cap.math.domain.MathEntity;
 import cap.math.domain.User;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +43,7 @@ public class MathServiceImpl implements MathService {
     private final GptConfig gptConfig;
     private final RestTemplate restTemplate;
     private final MathEntityRepository mathEntityRepository;
+    private final MathConverter mathConverter;
 
     @Override
     @Transactional
@@ -99,40 +102,20 @@ public class MathServiceImpl implements MathService {
     public MathResponseDTO.crerateMathDto getMath (Long mathId){
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
-        List<MathEntity> entities=mathEntityRepository.findALLByMathId(mathId);
-
-        if (entities.size() < 2) {
-            throw new RuntimeException("엔티티가 2개 이상이어야 합니다.");
-        }
-
-        MathEntity e1 = entities.get(0);
-        MathEntity e2 = entities.get(1);
-
-        MathResponseDTO.mathProblemDto problemDto=MathResponseDTO.mathProblemDto.builder()
-                .problem(math.getProblem())
-                .entity(e1.getEntity())
-                .count1(e1.getCount())
-                .count2(e2.getCount())
-                .answer(math.getAnswer())
-                .wrongAnswers(math.getWrongAnswers())
-                .build();
-
-        MathResponseDTO.crerateMathDto mathResponse=MathResponseDTO.crerateMathDto.builder()
-                .mathId(math.getId())
-                .image(math.getImage())
-                .mathProblemDto(problemDto)
-                .build();
-        return mathResponse;
-
-
+        List<MathEntity> entities = mathEntityRepository.findALLByMathId(math.getId());
+        return MathConverter.toCreateMathDto(math, entities);
     }
 
+    @Override
+    @Transactional
     public String getImage (Long mathId){
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
 
         return math.getImage();
     }
+    @Override
+    @Transactional
     public String getAnswer (Long mathId, Integer answer){
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
@@ -144,6 +127,8 @@ public class MathServiceImpl implements MathService {
         }
     }
 
+    @Override
+    @Transactional
     public MathResponseDTO.getAnswerDto getRandom(Long mathId){
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
@@ -156,6 +141,17 @@ public class MathServiceImpl implements MathService {
                 .wrongAnswer2(wrongAnswers.get(1))
                 .build();
 
+    }
+    @Override
+    @Transactional
+    public MathResponseDTO.crerateMathDto getNew(Long userId) {
+        LocalDateTime threeSecondsAgo = LocalDateTime.now().minusSeconds(3);
+        return mathRepository.findFirstByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(userId, threeSecondsAgo)
+                .map(math -> {
+                    List<MathEntity> entities = mathEntityRepository.findALLByMathId(math.getId());
+                    return MathConverter.toCreateMathDto(math, entities);
+                })
+                .orElse(null);
     }
 
     public String generatePrompt(String imageUrl) {
