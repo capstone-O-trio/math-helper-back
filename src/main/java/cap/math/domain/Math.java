@@ -10,6 +10,7 @@ import java.util.List;
 @Entity
 @Getter
 @Builder
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Math extends BaseEntity {
@@ -25,6 +26,9 @@ public class Math extends BaseEntity {
 
     @ElementCollection
     private List<Integer> wrongAnswers;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isChecked= false;
 
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="user_id")

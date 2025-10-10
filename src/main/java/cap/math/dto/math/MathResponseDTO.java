@@ -21,6 +21,7 @@ public class MathResponseDTO {
 
 
     }
+
     @Builder
     @Getter
     @NoArgsConstructor

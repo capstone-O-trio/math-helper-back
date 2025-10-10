@@ -74,6 +74,7 @@ public class MathServiceImpl implements MathService {
                 .problem(problemDto.getProblem())
                 .answer(problemDto.getAnswer())
                 .wrongAnswers(problemDto.getWrongAnswers())
+                .isChecked(false)
                 .build();
         math=mathRepository.save(math);
         MathEntity entity1 = MathEntity.builder()
@@ -102,6 +103,7 @@ public class MathServiceImpl implements MathService {
     public MathResponseDTO.crerateMathDto getMath (Long mathId){
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        math.setIsChecked(true);
         List<MathEntity> entities = mathEntityRepository.findALLByMathId(math.getId());
         return MathConverter.toCreateMathDto(math, entities);
     }
@@ -112,6 +114,7 @@ public class MathServiceImpl implements MathService {
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
 
+        math.setIsChecked(true);
         return math.getImage();
     }
     @Override
@@ -145,9 +148,9 @@ public class MathServiceImpl implements MathService {
     @Override
     @Transactional
     public MathResponseDTO.crerateMathDto getNew(Long userId) {
-        LocalDateTime threeSecondsAgo = LocalDateTime.now().minusSeconds(3);
-        return mathRepository.findFirstByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(userId, threeSecondsAgo)
+        return mathRepository.findFirstByUserIdAndIsCheckedFalseOrderByCreatedAtDesc(userId)
                 .map(math -> {
+                    math.setIsChecked(true);
                     List<MathEntity> entities = mathEntityRepository.findALLByMathId(math.getId());
                     return MathConverter.toCreateMathDto(math, entities);
                 })
