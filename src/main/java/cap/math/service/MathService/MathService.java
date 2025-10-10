@@ -11,6 +11,7 @@ public interface MathService {
     String getImage (Long mathId);
     String getAnswer (Long mathId, Integer answer);
     MathResponseDTO.getAnswerDto getRandom(Long mathId);
+    MathResponseDTO.crerateMathDto getNew(Long userId);
 
 
 }
