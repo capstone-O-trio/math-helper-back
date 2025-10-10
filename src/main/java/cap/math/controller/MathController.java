@@ -65,10 +65,10 @@ public class MathController {
     @GetMapping(value="/answers/{mathId}")
     @Operation(summary="정답 확인 API",
             description="수학문제 ID 입력하고 정답을 입력하면, 정오답을 판별합니다.")
-    public ApiResponse<String> getAnswer(@AuthenticationPrincipal String userName,@PathVariable Long mathId, @RequestParam Integer answer){
+    public ApiResponse<Boolean> getAnswer(@AuthenticationPrincipal String userName,@PathVariable Long mathId, @RequestParam Integer answer){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
-        String response=mathService.getAnswer(mathId, answer);
+        Boolean response=mathService.getAnswer(mathId, answer);
         return ApiResponse.onSuccess(response);
     }
 

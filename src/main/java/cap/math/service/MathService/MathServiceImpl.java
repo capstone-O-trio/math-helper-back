@@ -119,14 +119,14 @@ public class MathServiceImpl implements MathService {
     }
     @Override
     @Transactional
-    public String getAnswer (Long mathId, Integer answer){
+    public Boolean getAnswer (Long mathId, Integer answer){
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
         if(Objects.equals(math.getAnswer(), answer)){
-            return "정답입니다.";
+            return true;
         }
         else{
-            return "오답입니다.";
+            return false;
         }
     }
 
