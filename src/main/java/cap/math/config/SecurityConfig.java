@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
                 )
 
-                // 4. 직접 만든 JwtFilter를 UsernamePasswordAuthenticationFilter 앞에 추가
+                // 4. 직접 만든 JwtFilter를 UsernamePasswordAuthenticationFilter 앞에 추가/
                 .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
