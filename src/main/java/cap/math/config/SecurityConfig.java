@@ -44,7 +44,7 @@ public class SecurityConfig {
                 // 2. 세션 관리 정책을 STATELESS로 설정
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 3. HTTP 요청에 대한 인가 규칙 설정/
+                // 3. HTTP 요청에 대한 인가 규칙 설정
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/**","/users/login/**","/users/signup/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // 특정 경로는 모두 허용
