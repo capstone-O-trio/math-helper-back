@@ -12,6 +12,7 @@ public interface MathService {
     Boolean getAnswer (Long mathId, Integer answer);
     MathResponseDTO.getAnswerDto getRandom(Long mathId);
     MathResponseDTO.crerateMathDto getNew(Long userId);
+    String getSimpleResponse(String prompt, String directory, MultipartFile image);
 
 
 }
