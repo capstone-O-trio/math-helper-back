@@ -156,6 +156,8 @@ public class MathServiceImpl implements MathService {
                 .orElse(null);
     }
 
+
+
     public String generatePrompt(String imageUrl) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("이미지 주소: ").append(imageUrl).append("\n")
@@ -205,6 +207,7 @@ public class MathServiceImpl implements MathService {
                 }}
         });
 
+
         // 기타 설정
         requestBody.put("temperature", 0.3);
         requestBody.put("max_tokens", maxTokens);
@@ -220,6 +223,8 @@ public class MathServiceImpl implements MathService {
             return "Error: " + e.getMessage();
         }
     }
+
+
 
     private String extractContent(String gptResponseJson) {
         try {
@@ -237,6 +242,59 @@ public class MathServiceImpl implements MathService {
             return content;
         } catch (Exception e) {
             throw new TempHandler(JSON_PARSING_ERROR);
+        }
+    }
+    @Override
+    @Transactional
+    public String getSimpleResponse(String prompt,String directory, MultipartFile image) {
+        String imageUrl= s3Manager.uploadFile(directory, image);
+
+        String gptResponse = callOpenAITest(prompt, imageUrl, 500);
+        return extractPlainContent(gptResponse);
+    }
+
+    private String callOpenAITest(String prompt, String imageUrl, int maxTokens) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(gptConfig.getSecretKey());
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "gpt-4o");
+
+        // ✅ messages에 text + image_url 모두 포함
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", List.of(
+                Map.of("type", "text", "text", prompt),
+                Map.of("type", "image_url", "image_url", Map.of("url", imageUrl))
+        ));
+
+        requestBody.put("messages", List.of(userMessage));
+        requestBody.put("max_tokens", maxTokens);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "https://api.openai.com/v1/chat/completions",
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            return "GPT 호출 중 오류: " + e.getMessage();
+        }
+    }
+
+    private String extractPlainContent(String gptResponseJson) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(gptResponseJson);
+            String content = root.path("choices").get(0).path("message").path("content").asText();
+            return content.trim();
+        } catch (Exception e) {
+            return "응답 파싱 실패: " + e.getMessage();
         }
     }
 
