@@ -20,7 +20,9 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public User joinUser(UserRequestDTO.JoinDto request){
-
+        if(userRepository.existsByName(request.getName())){
+            throw new TempHandler(ErrorStatus.EMAIL_ALREADY_EXIST);
+        }
         User user= UserConverter.toUser(request);
         return userRepository.save(user);
     }
