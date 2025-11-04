@@ -24,9 +24,6 @@ public class Math extends BaseEntity {
 
     private String problem;
 
-    @ElementCollection
-    private List<Integer> wrongAnswers;
-
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isChecked= false;
 
@@ -34,8 +31,12 @@ public class Math extends BaseEntity {
     @JoinColumn(name="user_id")
     private User user;
 
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="math_type_id")
+    private MathType mathType;
+
     @OneToMany(mappedBy = "math", cascade = CascadeType.ALL)
-    private List<MathEntity> mathEntityList=new ArrayList<>();
+    private List<ProbExtractImage> probExtractImageArrayList=new ArrayList<>();
 
 
 

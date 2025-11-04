@@ -73,7 +73,6 @@ public class MathServiceImpl implements MathService {
                 .user(user)
                 .problem(problemDto.getProblem())
                 .answer(problemDto.getAnswer())
-                .wrongAnswers(problemDto.getWrongAnswers())
                 .isChecked(false)
                 .build();
         math=mathRepository.save(math);
@@ -135,13 +134,10 @@ public class MathServiceImpl implements MathService {
     public MathResponseDTO.getAnswerDto getRandom(Long mathId){
         Math math=mathRepository.findById(mathId)
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
-        List<Integer> wrongAnswers = math.getWrongAnswers();
 
         return MathResponseDTO.getAnswerDto.builder()
                 .answer(math.getAnswer())
                 .mathId(mathId)
-                .wrongAnswer1(wrongAnswers.get(0))
-                .wrongAnswer2(wrongAnswers.get(1))
                 .build();
 
     }
