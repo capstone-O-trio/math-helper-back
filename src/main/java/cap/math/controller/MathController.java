@@ -9,6 +9,7 @@ import cap.math.dto.math.MathResponseDTO;
 import cap.math.repository.MathRepository;
 import cap.math.repository.UserRepository;
 import cap.math.service.MathService.MathService;
+import cap.math.service.TemplateService.TemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ public class MathController {
     private final MathService mathService;
     private final UserRepository userRepository;
     private final MathRepository mathRepository;
+    private final TemplateService templateService;
 
     @PostMapping(value="/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary="사진 촬영 API",
@@ -39,6 +41,27 @@ public class MathController {
         MathResponseDTO.crerateMathDto math= mathService.createMath(user,"image",image);
 
         return ApiResponse.onSuccess(math);
+    }
+
+    @PostMapping(value="/types",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary="유형 분류 API",
+            description="수학문제 사진 업로드 시, GPT로부터 문제의 유형 번호를 받아옵니다.")
+    public ApiResponse<MathResponseDTO.crerateMathTypeDto> createMathType(@AuthenticationPrincipal String userName, @RequestParam("imageFile") MultipartFile image){
+        User user=userRepository.findByName(userName)
+                .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
+        MathResponseDTO.crerateMathTypeDto math= mathService.createMathType(user,"image",image);
+
+        return ApiResponse.onSuccess(math);
+    }
+    @GetMapping(value="/templates")
+    @Operation(summary="컨텐츠 리스트 조회 API",
+            description="문제 유형을 입력하면, 가능한 컨텐츠 리스트를 보여줍니다.")
+    public ApiResponse<MathResponseDTO.templateDto> getTemplates(@AuthenticationPrincipal String userName, @RequestParam String typeName){
+        User user=userRepository.findByName(userName)
+                .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
+        MathResponseDTO.templateDto templateList= templateService.getTemplateList(typeName);
+
+        return ApiResponse.onSuccess(templateList);
     }
 
     @GetMapping(value="/quiz/{mathId}")

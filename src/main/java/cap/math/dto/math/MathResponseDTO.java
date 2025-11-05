@@ -21,6 +21,35 @@ public class MathResponseDTO {
 
 
     }
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class crerateMathTypeDto{
+        private Long mathId;
+        private String image;
+        private mathTypeDto mathTypeDto;
+    }
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class mathTypeDto{
+        private String problem;
+        private String type_name;
+        private Integer answer;
+        private String extractedImage;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class templateDto{
+        private List<Long> templateIds;
+    }
+
+
 
     @Builder
     @Getter

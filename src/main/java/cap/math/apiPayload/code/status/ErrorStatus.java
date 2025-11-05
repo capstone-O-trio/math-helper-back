@@ -36,6 +36,7 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 기타 에러
     JSON_PARSING_ERROR(HttpStatus.BAD_REQUEST, "JSON4001", "JSON 파싱이 잘못되었습니다."),
+    TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "TYPE4001", "존재하지 않는 수학문제 유형입니다."),
 
     ;
 

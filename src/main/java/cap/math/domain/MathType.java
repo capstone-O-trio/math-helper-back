@@ -18,7 +18,7 @@ public class MathType extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String type_name;
+    private String typeName;
 
     //@Column(length = 5000)
     @Lob

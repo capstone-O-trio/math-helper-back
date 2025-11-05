@@ -7,14 +7,11 @@ import cap.math.aws.s3.AmazonS3Manager;
 
 import cap.math.config.GptConfig;
 import cap.math.converter.MathConverter;
+import cap.math.domain.*;
 import cap.math.domain.Math;
-import cap.math.domain.MathEntity;
-import cap.math.domain.User;
 import cap.math.dto.math.MathRequestDTO;
 import cap.math.dto.math.MathResponseDTO;
-import cap.math.repository.MathEntityRepository;
-import cap.math.repository.MathRepository;
-import cap.math.repository.UuidRepository;
+import cap.math.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +41,8 @@ public class MathServiceImpl implements MathService {
     private final RestTemplate restTemplate;
     private final MathEntityRepository mathEntityRepository;
     private final MathConverter mathConverter;
+    private final MathTypeRepository mathTypeRepository;
+    private final ProbExtractImageRepository  probExtractImageRepository;
 
     @Override
     @Transactional
@@ -96,6 +95,52 @@ public class MathServiceImpl implements MathService {
                 .build();
 
         return mathResponse;
+    }
+    @Override
+    @Transactional
+    public MathResponseDTO.crerateMathTypeDto createMathType(User user, String directory, MultipartFile image){
+
+
+        String imageUrl= s3Manager.uploadFile(directory, image);
+        String typePrompt=generateTypePrompt(imageUrl);
+        String response;
+        try{
+            response = callOpenAI(typePrompt, 200);
+        } catch (JsonProcessingException e) {
+            throw new TempHandler(JSON_PARSING_ERROR);
+        }
+        ObjectMapper objectMapper=new ObjectMapper();
+        MathResponseDTO.mathTypeDto typeDto;
+        try{
+            typeDto=objectMapper.readValue(extractContent(response), MathResponseDTO.mathTypeDto.class);
+        }catch (Exception e) {
+            throw new TempHandler(_BAD_REQUEST);
+        }
+        MathType mathType=mathTypeRepository.findByTypeName(typeDto.getType_name())
+                .orElseThrow(() -> new TempHandler(TYPE_NOT_FOUND));
+
+        Math math= Math.builder()
+                .image(imageUrl)
+                .user(user)
+                .problem(typeDto.getProblem())
+                .answer(typeDto.getAnswer())
+                .mathType(mathType)
+                .isChecked(false)
+                .build();
+        math=mathRepository.save(math);
+        ProbExtractImage extractImage = ProbExtractImage.builder()
+                .extractImage(typeDto.getExtractedImage())
+                .math(math)
+                .build();
+
+        probExtractImageRepository.save(extractImage);
+        MathResponseDTO.crerateMathTypeDto typeResponse=MathResponseDTO.crerateMathTypeDto.builder()
+                .mathId(math.getId())
+                .image(imageUrl)
+                .mathTypeDto(typeDto)
+                .build();
+
+        return typeResponse;
     }
     @Override
     @Transactional
@@ -153,6 +198,28 @@ public class MathServiceImpl implements MathService {
     }
 
 
+    public String generateTypePrompt(String imageUrl) {
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("이미지 주소: ").append(imageUrl).append("\n")
+                .append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
+                .append("1. 먼저 이미지를 자세히 보고, 글자뿐 아니라 그림(사과 개수 등)으로 표현된 수량이 있으면 텍스트 변환해서 '4+5'처럼 이 형식으로 읽어줘.\n")
+                .append("2. 문제의 핵심 연산이 덧셈인지 뺄셈인지 판단하고, 문제의 수식 형태(예: 2+3)를 명확히 구성해. 숫자 제발 다시 정확하게 봐. 텍스트 추출 잘해.\n")
+                .append("3. JSON은 반드시 아래 예시 형식으로 출력하고, 설명이나 추가 문장은 절대 쓰지 마.\n")
+                .append("4. 'entity'는 항상 'apple'로 고정.\n")
+                .append("5. 'wrongAnswers'는 정답과 1~2 차이 나는 숫자 두 개로 만들어.\n\n")
+                .append("출력 형식 예시:\n")
+                .append("{\n")
+                .append("  \"problem\": \"2+3\",\n")
+                .append("  \"entity\": \"apple\",\n")
+                .append("  \"count1\": 2,\n")
+                .append("  \"count2\": 3,\n")
+                .append("  \"answer\": 5,\n")
+                .append("  \"typeName\": 3,\n")
+                .append("}\n\n")
+                .append("지금부터 이미지를 분석하고 위 JSON만 정확히 출력해. 그 외 설명은 쓰지 마.");
+
+        return prompt.toString();
+    }
 
     public String generatePrompt(String imageUrl) {
         StringBuilder prompt = new StringBuilder();
