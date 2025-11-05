@@ -32,7 +32,6 @@ public class MathConverter {
                 .count1(e1.getCount())
                 .count2(e2.getCount())
                 .answer(math.getAnswer())
-                .wrongAnswers(math.getWrongAnswers())
                 .build();
 
         return MathResponseDTO.crerateMathDto.builder()
