@@ -53,7 +53,7 @@ public class MathServiceImpl implements MathService {
         String prompt=generatePrompt(imageUrl);
         String response;
         try{
-            response = callOpenAI(prompt, 200);
+            response = callOpenAI(prompt, imageUrl,200);
             System.out.print(response);
         } catch (JsonProcessingException e) {
             throw new TempHandler(JSON_PARSING_ERROR);
@@ -105,7 +105,7 @@ public class MathServiceImpl implements MathService {
         String typePrompt=generateTypePrompt(imageUrl);
         String response;
         try{
-            response = callOpenAI(typePrompt, 200);
+            response = callOpenAI(typePrompt, imageUrl, 200);
         } catch (JsonProcessingException e) {
             throw new TempHandler(JSON_PARSING_ERROR);
         }
@@ -245,7 +245,7 @@ public class MathServiceImpl implements MathService {
     }
 
 
-    public String callOpenAI(String prompt, int maxTokens) throws JsonProcessingException {
+    public String callOpenAI(String prompt, String imageUrl, int maxTokens) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(gptConfig.getSecretKey());

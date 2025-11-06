@@ -64,9 +64,20 @@ public class MathController {
         return ApiResponse.onSuccess(templateList);
     }
 
+    @PostMapping(value="/parameters/{mathId}")
+    @Operation(summary="파라미터 추출 API",
+            description="LLM으로부터 사용자가 선택한 템플릿에 맞는 파라미터를 추출합니다.")
+    public ApiResponse<MathResponseDTO.createParameterDto> createParameter(@AuthenticationPrincipal String userName, @PathVariable Long mathId, @RequestParam Long templateId){
+        User user=userRepository.findByName(userName)
+                .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
+        MathResponseDTO.createParameterDto parameter= templateService.createParameter(mathId, templateId);
+
+        return ApiResponse.onSuccess(parameter);
+    }
+
     @GetMapping(value="/quiz/{mathId}")
     @Operation(summary="문제 풀기 API",
-            description="수학문제 ID 입력 시, JSON 데이터을 추출합니다.")
+            description="수학문제 ID 입력 시, JSON 데이터를 추출합니다.")
     public ApiResponse<MathResponseDTO.crerateMathDto> getMath(@AuthenticationPrincipal String userName,@PathVariable Long mathId){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
