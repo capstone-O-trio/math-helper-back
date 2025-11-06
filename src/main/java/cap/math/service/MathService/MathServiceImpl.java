@@ -25,10 +25,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static cap.math.apiPayload.code.status.ErrorStatus.*;
 
@@ -102,10 +100,10 @@ public class MathServiceImpl implements MathService {
 
 
         String imageUrl= s3Manager.uploadFile(directory, image);
-        String typePrompt=generateTypePrompt(imageUrl);
+        String typePrompt=generateTypePrompt();
         String response;
         try{
-            response = callOpenAI(typePrompt, imageUrl, 200);
+            response = callOpenAIV2(typePrompt, imageUrl, 200);
         } catch (JsonProcessingException e) {
             throw new TempHandler(JSON_PARSING_ERROR);
         }
@@ -198,23 +196,27 @@ public class MathServiceImpl implements MathService {
     }
 
 
-    public String generateTypePrompt(String imageUrl) {
+    public String generateTypePrompt() {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("이미지 주소: ").append(imageUrl).append("\n")
-                .append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
-                .append("1. 먼저 이미지를 자세히 보고, 글자뿐 아니라 그림(사과 개수 등)으로 표현된 수량이 있으면 텍스트 변환해서 '4+5'처럼 이 형식으로 읽어줘.\n")
-                .append("2. 문제의 핵심 연산이 덧셈인지 뺄셈인지 판단하고, 문제의 수식 형태(예: 2+3)를 명확히 구성해. 숫자 제발 다시 정확하게 봐. 텍스트 추출 잘해.\n")
+        List<String> gptList = mathTypeRepository.findAll()
+                .stream()
+                .map(MathType::getGpt) // 각 객체에서 gpt 필드 추출
+                .collect(Collectors.toList());
+        prompt.append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
+                .append("1. 먼저 이미지를 자세히 보고, 문제를 스크립트 변환해줘. 문제 텍스트는 problem에 붙여줘.\n")
+                .append("2. 문제 텍스트와 문제 이미지를 보고 내가 보낸 유형 리스트 중에 해당하는 유형 이름을 추출해서 typeName에 붙여줘.\n")
                 .append("3. JSON은 반드시 아래 예시 형식으로 출력하고, 설명이나 추가 문장은 절대 쓰지 마.\n")
-                .append("4. 'entity'는 항상 'apple'로 고정.\n")
-                .append("5. 'wrongAnswers'는 정답과 1~2 차이 나는 숫자 두 개로 만들어.\n\n")
+                .append("4. 문제 정답도 구해주고 answer에 붙여줘.\n")
+                .append("5. 그리고 이 문제의 학년, 학기, 단원 제목도 알려줘.\n\n")
+                .append("6. 유형 리스트 보내줄게.\n") .append(gptList).append("\n\n")
                 .append("출력 형식 예시:\n")
                 .append("{\n")
                 .append("  \"problem\": \"2+3\",\n")
-                .append("  \"entity\": \"apple\",\n")
-                .append("  \"count1\": 2,\n")
-                .append("  \"count2\": 3,\n")
+                .append("  \"typeName\": \"apple\",\n")
                 .append("  \"answer\": 5,\n")
-                .append("  \"typeName\": 3,\n")
+                .append("  \"학년\": 3,\n")
+                .append("  \"학기\": 2,\n")
+                .append("  \"단원\": 1단원,\n")
                 .append("}\n\n")
                 .append("지금부터 이미지를 분석하고 위 JSON만 정확히 출력해. 그 외 설명은 쓰지 마.");
 
@@ -242,6 +244,62 @@ public class MathServiceImpl implements MathService {
                 .append("지금부터 이미지를 분석하고 위 JSON만 정확히 출력해. 그 외 설명은 쓰지 마.");
 
         return prompt.toString();
+    }
+
+    public String callOpenAIV2(String prompt, String imageUrl, int maxTokens) throws JsonProcessingException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(gptConfig.getSecretKey());
+
+        // OpenAI 메시지 구성
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", gptConfig.getModel());
+
+        List<Map<String, Object>> contentList = new ArrayList<>();
+
+        // 1. 텍스트 프롬프트
+        Map<String, Object> textContent = new HashMap<>();
+        textContent.put("type", "text");
+        textContent.put("text", prompt);
+        contentList.add(textContent);
+
+        // 2. 이미지 URL (GPT가 실제로 인식할 수 있도록 전달)
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Map<String, Object> imageContent = new HashMap<>();
+            imageContent.put("type", "image_url");
+
+            Map<String, String> imageUrlMap = new HashMap<>();
+            imageUrlMap.put("url", imageUrl); // 👈 실제 이미지 URL
+            imageContent.put("image_url", imageUrlMap);
+
+            contentList.add(imageContent);
+        }
+
+        // user 메시지 구성
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", contentList);
+
+        List<Map<String, Object>> messages = new ArrayList<>();
+        messages.add(userMessage);
+
+        requestBody.put("messages", messages);
+        requestBody.put("temperature", 0.3);
+        requestBody.put("max_tokens", maxTokens);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "https://api.openai.com/v1/chat/completions",
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
     }
 
 
@@ -324,7 +382,6 @@ public class MathServiceImpl implements MathService {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "gpt-4o");
 
-        // ✅ messages에 text + image_url 모두 포함
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", "user");
         userMessage.put("content", List.of(

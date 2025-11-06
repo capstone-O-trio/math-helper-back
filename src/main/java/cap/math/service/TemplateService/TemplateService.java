@@ -4,5 +4,5 @@ import cap.math.dto.math.MathResponseDTO;
 
 public interface TemplateService {
     MathResponseDTO.templateDto getTemplateList(String typeName);
-    MathResponseDTO.createParameterDto createParameter(Long mathId, Long templateId);
+    String createParameter(Long mathId, Long templateId);
 }

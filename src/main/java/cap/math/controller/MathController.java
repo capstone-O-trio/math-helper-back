@@ -67,12 +67,12 @@ public class MathController {
     @PostMapping(value="/parameters/{mathId}")
     @Operation(summary="파라미터 추출 API",
             description="LLM으로부터 사용자가 선택한 템플릿에 맞는 파라미터를 추출합니다.")
-    public ApiResponse<MathResponseDTO.createParameterDto> createParameter(@AuthenticationPrincipal String userName, @PathVariable Long mathId, @RequestParam Long templateId){
+    public ApiResponse<String> createParameter(@AuthenticationPrincipal String userName, @PathVariable Long mathId, @RequestParam Long templateId){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
-        MathResponseDTO.createParameterDto parameter= templateService.createParameter(mathId, templateId);
+        String parameter= templateService.createParameter(mathId, templateId);
 
-        return ApiResponse.onSuccess(parameter);
+         return ApiResponse.onSuccess(parameter);
     }
 
     @GetMapping(value="/quiz/{mathId}")
