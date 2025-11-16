@@ -21,6 +21,54 @@ public class MathResponseDTO {
 
 
     }
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class crerateMathTypeDto{
+        private Long mathId;
+        private String image;
+        private mathTypeDto mathTypeDto;
+    }
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class mathTypeDto{
+        private String problem;
+        private String type_name;
+        private Integer answer;
+        private String extractedImage;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class templateDto{
+        private List<singleTemplateDto> templates;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class singleTemplateDto{
+        private Long templateId;
+        private String templateName;
+        private Boolean isPossible;
+        private String templateImage;
+    }
+
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class createParameterDto{
+        private String deploy;
+    }
+
 
     @Builder
     @Getter

@@ -7,14 +7,11 @@ import cap.math.aws.s3.AmazonS3Manager;
 
 import cap.math.config.GptConfig;
 import cap.math.converter.MathConverter;
+import cap.math.domain.*;
 import cap.math.domain.Math;
-import cap.math.domain.MathEntity;
-import cap.math.domain.User;
 import cap.math.dto.math.MathRequestDTO;
 import cap.math.dto.math.MathResponseDTO;
-import cap.math.repository.MathEntityRepository;
-import cap.math.repository.MathRepository;
-import cap.math.repository.UuidRepository;
+import cap.math.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,10 +25,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static cap.math.apiPayload.code.status.ErrorStatus.*;
 
@@ -44,6 +39,9 @@ public class MathServiceImpl implements MathService {
     private final RestTemplate restTemplate;
     private final MathEntityRepository mathEntityRepository;
     private final MathConverter mathConverter;
+    private final MathTypeRepository mathTypeRepository;
+    private final ProbExtractImageRepository  probExtractImageRepository;
+    private final TemplateRepository templateRepository;
 
     @Override
     @Transactional
@@ -54,7 +52,7 @@ public class MathServiceImpl implements MathService {
         String prompt=generatePrompt(imageUrl);
         String response;
         try{
-            response = callOpenAI(prompt, 200);
+            response = callOpenAI(prompt, imageUrl,200);
             System.out.print(response);
         } catch (JsonProcessingException e) {
             throw new TempHandler(JSON_PARSING_ERROR);
@@ -96,6 +94,54 @@ public class MathServiceImpl implements MathService {
                 .build();
 
         return mathResponse;
+    }
+    @Override
+    @Transactional
+    public MathResponseDTO.crerateMathTypeDto createMathType(User user, String directory, MultipartFile image){
+
+
+        String imageUrl= s3Manager.uploadFile(directory, image);
+        String typePrompt=generateTypePrompt();
+        String response;
+        try{
+            response = callOpenAIV2(typePrompt, imageUrl, 500);
+            System.out.println(response);
+        } catch (JsonProcessingException e) {
+            throw new TempHandler(JSON_PARSING_ERROR);
+        }
+        ObjectMapper objectMapper=new ObjectMapper();
+        MathResponseDTO.mathTypeDto typeDto;
+        try{
+            typeDto=objectMapper.readValue(extractContent(response), MathResponseDTO.mathTypeDto.class);
+        }catch (Exception e) {
+            throw new TempHandler(_BAD_REQUEST);
+        }
+
+        MathType mathType=mathTypeRepository.findByTypeName(typeDto.getType_name())
+                .orElseThrow(() -> new TempHandler(TYPE_NOT_FOUND));
+
+        Math math= Math.builder()
+                .image(imageUrl)
+                .user(user)
+                .problem(typeDto.getProblem())
+                .answer(typeDto.getAnswer())
+                .mathType(mathType)
+                .isChecked(false)
+                .build();
+        math=mathRepository.save(math);
+        ProbExtractImage extractImage = ProbExtractImage.builder()
+                .extractImage(typeDto.getExtractedImage())
+                .math(math)
+                .build();
+
+        probExtractImageRepository.save(extractImage);
+        MathResponseDTO.crerateMathTypeDto typeResponse=MathResponseDTO.crerateMathTypeDto.builder()
+                .mathId(math.getId())
+                .image(imageUrl)
+                .mathTypeDto(typeDto)
+                .build();
+
+        return typeResponse;
     }
     @Override
     @Transactional
@@ -153,6 +199,30 @@ public class MathServiceImpl implements MathService {
     }
 
 
+    public String generateTypePrompt() {
+        StringBuilder prompt = new StringBuilder();
+        List<String> gptList = mathTypeRepository.findAll()
+                .stream()
+                .map(MathType::getGpt) // 각 객체에서 gpt 필드 추출
+                .collect(Collectors.toList());
+        prompt.append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
+                .append("1. 먼저 이미지를 자세히 보고, 문제를 스크립트 변환해줘. 문제 텍스트는 problem에 붙여줘.\n")
+                .append("2. 문제 텍스트와 문제 이미지를 보고 내가 보낸 유형 리스트 중에 해당하는 유형 이름을 추출해서 type_name에 붙여줘.\n")
+                .append("3. JSON은 반드시 아래 예시 형식으로 출력하고, 설명이나 추가 문장은 절대 쓰지 마.\n")
+                .append("4. 문제 정답도 구해주고 answer에 붙여줘. 만약 정답이 왼쪽 오른쪽 등으로 나온다면 우상향 방향을 기준으로 순서대로 번호로 답해줘.\n")
+                .append("5. 그리고 이 문제에 사진이 있다면 사진 url을 extractedImage에 저장해줘. 만약 없거나 저장할 수 없다면 null로 해.\n\n")
+                .append("6. 유형 리스트 보내줄게. 만약 내가 준 유형 리스트 중에서 이 문제의 유형에 해당하는게 없다면 type_name은 그냥 false로 보내고, 있다면 아래와 같이 JSON 형식으로 답변하면돼.\n") .append(gptList).append("\n\n")
+                .append("출력 형식 예시:\n")
+                .append("{\n")
+                .append("  \"problem\": \"2+3\",\n")
+                .append("  \"type_name\": \"apple\",\n")
+                .append("  \"answer\": 5,\n")
+                .append("  \"extractedImage\": string,\n")
+                .append("}\n\n")
+                .append("지금부터 이미지를 분석하고 위 JSON만 정확히 출력해. 그 외 설명은 쓰지 마.");
+
+        return prompt.toString();
+    }
 
     public String generatePrompt(String imageUrl) {
         StringBuilder prompt = new StringBuilder();
@@ -177,8 +247,112 @@ public class MathServiceImpl implements MathService {
         return prompt.toString();
     }
 
+    @Override
+    @Transactional
+    public MathResponseDTO.createParameterDto createParameter(Long mathId, Long templateId){
 
-    public String callOpenAI(String prompt, int maxTokens) throws JsonProcessingException {
+        Math math=mathRepository.findById(mathId)
+                .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        String typePrompt=generateTemplatePrompt(mathId,templateId);
+        String imageUrl=math.getImage();
+        String response;
+        try{
+            response = callOpenAIV2(typePrompt, imageUrl, 500);
+            System.out.println(response);
+        } catch (JsonProcessingException e) {
+            throw new TempHandler(JSON_PARSING_ERROR);
+        }
+        String extractedContent = extractContent(response);
+        MathResponseDTO.createParameterDto parameterDto = MathResponseDTO.createParameterDto.builder()
+                .deploy(extractedContent)
+                .build();
+
+
+        Template template= templateRepository.findById(templateId)
+                .orElseThrow(()-> new TempHandler(TEMPLATE_NOT_FOUND));
+
+        template.setGpt(parameterDto.getDeploy());
+        templateRepository.save(template);
+
+        return parameterDto;
+
+
+    }
+
+    public String generateTemplatePrompt(Long mathId,Long templateId) {
+        StringBuilder prompt = new StringBuilder();
+        Math math=mathRepository.findById(mathId).orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        String mathText=math.getProblem();
+        String mathType=math.getMathType().getTypeName();
+        Template template= templateRepository.findById(templateId).orElseThrow(()->new TempHandler(TEMPLATE_NOT_FOUND));
+        String gpt=template.getGpt();
+
+        prompt.append("문제:").append(mathText).append("\n")
+                .append("유형:").append(mathType).append("\n")
+                .append("1. 문제 텍스트와 유형은 위와 같아. \n")
+                .append("2. 템플릿 어떤식으로 해야하는지 보내줄게.\n").append(gpt).append("\n\n")
+                .append("지금부터 이미지를 분석하고 위 JSON만 정확히 출력해. 그 외 설명은 쓰지 마.");
+
+        return prompt.toString();
+    }
+    public String callOpenAIV2(String prompt, String imageUrl, int maxTokens) throws JsonProcessingException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(gptConfig.getSecretKey());
+
+        // OpenAI 메시지 구성
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", gptConfig.getModel());
+
+        List<Map<String, Object>> contentList = new ArrayList<>();
+
+        // 1. 텍스트 프롬프트
+        Map<String, Object> textContent = new HashMap<>();
+        textContent.put("type", "text");
+        textContent.put("text", prompt);
+        contentList.add(textContent);
+
+        // 2. 이미지 URL (GPT가 실제로 인식할 수 있도록 전달)
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Map<String, Object> imageContent = new HashMap<>();
+            imageContent.put("type", "image_url");
+
+            Map<String, String> imageUrlMap = new HashMap<>();
+            imageUrlMap.put("url", imageUrl);
+            imageContent.put("image_url", imageUrlMap);
+
+            contentList.add(imageContent);
+        }
+
+        // user 메시지 구성
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", contentList);
+
+        List<Map<String, Object>> messages = new ArrayList<>();
+        messages.add(userMessage);
+
+        requestBody.put("messages", messages);
+        requestBody.put("temperature", 0.3);
+        requestBody.put("max_tokens", maxTokens);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "https://api.openai.com/v1/chat/completions",
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+
+    public String callOpenAI(String prompt, String imageUrl, int maxTokens) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(gptConfig.getSecretKey());
@@ -220,8 +394,6 @@ public class MathServiceImpl implements MathService {
         }
     }
 
-
-
     private String extractContent(String gptResponseJson) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -257,7 +429,6 @@ public class MathServiceImpl implements MathService {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "gpt-4o");
 
-        // ✅ messages에 text + image_url 모두 포함
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", "user");
         userMessage.put("content", List.of(

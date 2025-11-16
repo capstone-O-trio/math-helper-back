@@ -13,6 +13,7 @@ public interface MathService {
     MathResponseDTO.getAnswerDto getRandom(Long mathId);
     MathResponseDTO.crerateMathDto getNew(Long userId);
     String getSimpleResponse(String prompt, String directory, MultipartFile image);
-
+    MathResponseDTO.crerateMathTypeDto createMathType(User user, String directory, MultipartFile image);
+    MathResponseDTO.createParameterDto createParameter(Long mathId, Long templateId);
 
 }
