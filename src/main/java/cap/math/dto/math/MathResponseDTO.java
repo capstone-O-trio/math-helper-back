@@ -46,14 +46,27 @@ public class MathResponseDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class templateDto{
-        private List<Long> templateIds;
+        private List<singleTemplateDto> templates;
     }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class singleTemplateDto{
+        private Long templateId;
+        private String templateName;
+        private Boolean isPossible;
+        private String templateImage;
+    }
+
+
     @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
     public static class createParameterDto{
-        private String gpt;
+        private String deploy;
     }
 
 
