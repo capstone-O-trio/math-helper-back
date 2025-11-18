@@ -182,7 +182,10 @@ public class MathServiceImpl implements MathService {
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
 
         return MathResponseDTO.getAnswerDto.builder()
+                .image(math.getImage())
                 .answer(math.getAnswer())
+                .wrongAnswer1(math.getWrongAnswer1())
+                .wrongAnswer2(math.getWrongAnswer2())
                 .mathId(mathId)
                 .build();
 

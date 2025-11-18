@@ -37,7 +37,7 @@ public class MathResponseDTO {
     public static class mathTypeDto{
         private String problem;
         private String type_name;
-        private Integer answer;
+        private String answer;
         private String extractedImage;
     }
 
@@ -79,8 +79,8 @@ public class MathResponseDTO {
         private String entity;
         private int count1;
         private int count2;
-        private int answer;
-        private List<Integer> wrongAnswers;
+        private String answer;
+        private List<String> wrongAnswers;
     }
     @Builder
     @Getter
@@ -88,9 +88,10 @@ public class MathResponseDTO {
     @AllArgsConstructor
     public static class getAnswerDto{
         private Long mathId;
-        private int answer;
-        private int wrongAnswer1;
-        private int wrongAnswer2;
+        private String image;
+        private String answer;
+        private String wrongAnswer1;
+        private String wrongAnswer2;
     }
 
 }

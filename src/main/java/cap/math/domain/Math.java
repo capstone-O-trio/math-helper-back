@@ -20,9 +20,13 @@ public class Math extends BaseEntity {
 
     private String image;
 
-    private Integer answer;
+    private String answer;
 
     private String problem;
+
+    private String wrongAnswer1;
+
+    private String wrongAnswer2;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isChecked= false;
