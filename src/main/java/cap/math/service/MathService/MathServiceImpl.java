@@ -189,11 +189,29 @@ public class MathServiceImpl implements MathService {
     }
     @Override
     @Transactional
-    public MathResponseDTO.crerateMathDto getNew(Long userId) {
+    public MathResponseDTO.crerateMathTypeDto getNew(Long userId) {
         return mathRepository.findFirstByUserIdAndIsCheckedFalseOrderByCreatedAtDesc(userId)
                 .map(math -> {
-                    List<MathEntity> entities = mathEntityRepository.findALLByMathId(math.getId());
-                    return MathConverter.toCreateMathDto(math, entities);
+                    // ProbExtractImage 조회
+                    ProbExtractImage extractImage =
+                            probExtractImageRepository.findByMathId(math.getId())
+                                    .orElse(null);
+                    // MathTypeDto 구성
+                    MathResponseDTO.mathTypeDto typeDto =
+                            MathResponseDTO.mathTypeDto.builder()
+                                    .problem(math.getProblem())
+                                    .type_name(math.getMathType().getTypeName())
+                                    .answer(math.getAnswer())
+                                    .extractedImage(extractImage != null ? extractImage.getExtractImage() : null)
+                                    .build();
+
+                    // 최종 반환 DTO 구성
+                    return MathResponseDTO.crerateMathTypeDto.builder()
+                            .mathId(math.getId())
+                            .image(math.getImage())
+                            .mathTypeDto(typeDto)
+                            .build();
+
                 })
                 .orElse(null);
     }
