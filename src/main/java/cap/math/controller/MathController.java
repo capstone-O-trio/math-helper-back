@@ -118,10 +118,10 @@ public class MathController {
 
     @GetMapping(value="/new")
     @Operation(summary="새로운 문제 조회 API")
-    public ApiResponse<MathResponseDTO.crerateMathDto> getNew(@AuthenticationPrincipal String userName){
+    public ApiResponse<MathResponseDTO.crerateMathTypeDto> getNew(@AuthenticationPrincipal String userName){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
-        MathResponseDTO.crerateMathDto response=mathService.getNew(user.getId());
+        MathResponseDTO.crerateMathTypeDto response=mathService.getNew(user.getId());
         return ApiResponse.onSuccess(response);
     }
 
