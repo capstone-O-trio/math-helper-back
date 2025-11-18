@@ -38,6 +38,8 @@ public class MathResponseDTO {
         private String problem;
         private String type_name;
         private String answer;
+        private String wrongAnswer1;
+        private String wrongAnswer2;
         private String extractedImage;
     }
 
