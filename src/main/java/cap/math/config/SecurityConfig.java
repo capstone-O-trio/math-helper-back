@@ -90,6 +90,10 @@ public class SecurityConfig {
                     || path.startsWith("/v3/api-docs")
                     || path.startsWith("/swagger-resources")
                     || path.startsWith("/webjars")
+                    || path.startsWith("/users/login")
+                    || path.startsWith("/users/signup")
+                    || path.startsWith("/temp/test")
+                    || path.startsWith("/temp/gpt")
                     || path.equals("/");
         }
 
