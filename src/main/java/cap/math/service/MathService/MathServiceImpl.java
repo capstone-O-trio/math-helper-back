@@ -301,9 +301,6 @@ public class MathServiceImpl implements MathService {
         Template template= templateRepository.findById(templateId)
                 .orElseThrow(()-> new TempHandler(TEMPLATE_NOT_FOUND));
 
-        template.setGpt(parameterDto.getDeploy());
-        templateRepository.save(template);
-
         return parameterDto;
 
 
