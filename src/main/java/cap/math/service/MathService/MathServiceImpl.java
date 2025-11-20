@@ -317,7 +317,9 @@ public class MathServiceImpl implements MathService {
         prompt.append("문제:").append(mathText).append("\n")
                 .append("유형:").append(mathType).append("\n")
                 .append("1. 문제 텍스트와 유형은 위와 같아. \n")
+                .append("1. 문제 텍스트와 유형은 위와 같아. \n")
                 .append("2. 템플릿 어떤식으로 해야하는지 보내줄게.\n").append(gpt).append("\n\n")
+                .append("3. 만약 entity_type에 값이 없다면 \"grape\"로 해줘. \n")
                 .append("지금부터 이미지를 분석하고 너의 답은 정확히 내가 제시한 문자열형식으로만 추출해. { \"entity1\": 6, \"entity2\": 2, \"entity_type\": \"peach\" }");
 
         return prompt.toString();
