@@ -41,6 +41,7 @@ public class MathServiceImpl implements MathService {
     private final MathConverter mathConverter;
     private final MathTypeRepository mathTypeRepository;
     private final ProbExtractImageRepository  probExtractImageRepository;
+    private final TemplateRepository templateRepository;
 
     @Override
     @Transactional
@@ -103,7 +104,8 @@ public class MathServiceImpl implements MathService {
         String typePrompt=generateTypePrompt();
         String response;
         try{
-            response = callOpenAIV2(typePrompt, imageUrl, 200);
+            response = callOpenAIV2(typePrompt, imageUrl, 500);
+            System.out.println(response);
         } catch (JsonProcessingException e) {
             throw new TempHandler(JSON_PARSING_ERROR);
         }
@@ -114,6 +116,7 @@ public class MathServiceImpl implements MathService {
         }catch (Exception e) {
             throw new TempHandler(_BAD_REQUEST);
         }
+
         MathType mathType=mathTypeRepository.findByTypeName(typeDto.getType_name())
                 .orElseThrow(() -> new TempHandler(TYPE_NOT_FOUND));
 
@@ -122,6 +125,8 @@ public class MathServiceImpl implements MathService {
                 .user(user)
                 .problem(typeDto.getProblem())
                 .answer(typeDto.getAnswer())
+                .wrongAnswer1(typeDto.getWrongAnswer1())
+                .wrongAnswer2(typeDto.getWrongAnswer2())
                 .mathType(mathType)
                 .isChecked(false)
                 .build();
@@ -179,18 +184,41 @@ public class MathServiceImpl implements MathService {
                 .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
 
         return MathResponseDTO.getAnswerDto.builder()
+                .image(math.getImage())
                 .answer(math.getAnswer())
+                .wrongAnswer1(math.getWrongAnswer1())
+                .wrongAnswer2(math.getWrongAnswer2())
                 .mathId(mathId)
                 .build();
 
     }
     @Override
     @Transactional
-    public MathResponseDTO.crerateMathDto getNew(Long userId) {
+    public MathResponseDTO.crerateMathTypeDto getNew(Long userId) {
         return mathRepository.findFirstByUserIdAndIsCheckedFalseOrderByCreatedAtDesc(userId)
                 .map(math -> {
-                    List<MathEntity> entities = mathEntityRepository.findALLByMathId(math.getId());
-                    return MathConverter.toCreateMathDto(math, entities);
+                    // ProbExtractImage 조회
+                    ProbExtractImage extractImage =
+                            probExtractImageRepository.findByMathId(math.getId())
+                                    .orElse(null);
+                    // MathTypeDto 구성
+                    MathResponseDTO.mathTypeDto typeDto =
+                            MathResponseDTO.mathTypeDto.builder()
+                                    .problem(math.getProblem())
+                                    .type_name(math.getMathType().getTypeName())
+                                    .answer(math.getAnswer())
+                                    .wrongAnswer1(math.getWrongAnswer1())
+                                    .wrongAnswer2(math.getWrongAnswer2())
+                                    .extractedImage(extractImage != null ? extractImage.getExtractImage() : null)
+                                    .build();
+
+                    // 최종 반환 DTO 구성
+                    return MathResponseDTO.crerateMathTypeDto.builder()
+                            .mathId(math.getId())
+                            .image(math.getImage())
+                            .mathTypeDto(typeDto)
+                            .build();
+
                 })
                 .orElse(null);
     }
@@ -204,19 +232,22 @@ public class MathServiceImpl implements MathService {
                 .collect(Collectors.toList());
         prompt.append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
                 .append("1. 먼저 이미지를 자세히 보고, 문제를 스크립트 변환해줘. 문제 텍스트는 problem에 붙여줘.\n")
-                .append("2. 문제 텍스트와 문제 이미지를 보고 내가 보낸 유형 리스트 중에 해당하는 유형 이름을 추출해서 typeName에 붙여줘.\n")
+                .append("2. 문제 텍스트와 문제 이미지를 보고 내가 보낸 유형 리스트 중에 해당하는 유형 이름을 추출해서 type_name에 붙여줘.\n")
                 .append("3. JSON은 반드시 아래 예시 형식으로 출력하고, 설명이나 추가 문장은 절대 쓰지 마.\n")
-                .append("4. 문제 정답도 구해주고 answer에 붙여줘.\n")
-                .append("5. 그리고 이 문제의 학년, 학기, 단원 제목도 알려줘.\n\n")
-                .append("6. 유형 리스트 보내줄게.\n") .append(gptList).append("\n\n")
+                .append("4. 문제 정답도 구해주고 answer에 붙여줘. answer의 타입은 String이야.\n")
+                .append("그리고 만약 문제의 답에 선택지가 있다면 wrongAnswer1과 wrongAnswer2에는 선택지에서 정답이 아닌 것을 넣어줘.\n")
+                .append("문제의 답에 선택지가 없다면 wrongAnswer1과 wrongAnswer2에는 숫자인 경우에는 +1한 값과 -1한 값을 넣고, 나머지는 너가 판단해서 오답으로 많이 나올 것 같은 걸 적어줘. \n")
+                .append("만약 2개 중 하나 고르는 등 wrongAnswer가 2개 이상 나오지 않을 경우 wrongAnswer2는 null로 지정해줘.\n")
+                .append("5. 그리고 이 문제에 사진이 있다면 사진 url을 extractedImage에 저장해줘. 만약 없거나 저장할 수 없다면 null로 해.\n\n")
+                .append("6. 유형 리스트 보내줄게. 만약 내가 준 유형 리스트 중에서 이 문제의 유형에 해당하는게 없다면 type_name은 그냥 false로 보내고, 있다면 아래와 같이 JSON 형식으로 답변하면돼.\n") .append(gptList).append("\n\n")
                 .append("출력 형식 예시:\n")
                 .append("{\n")
                 .append("  \"problem\": \"2+3\",\n")
-                .append("  \"typeName\": \"apple\",\n")
-                .append("  \"answer\": 5,\n")
-                .append("  \"학년\": 3,\n")
-                .append("  \"학기\": 2,\n")
-                .append("  \"단원\": 1단원,\n")
+                .append("  \"type_name\": \"apple\",\n")
+                .append("  \"answer\": \"5\",\n")
+                .append("  \"wrongAnswer1\": \"6\",\n")
+                .append("  \"wrongAnswer2\": \"4\",\n")
+                .append("  \"extractedImage\": string,\n")
                 .append("}\n\n")
                 .append("지금부터 이미지를 분석하고 위 JSON만 정확히 출력해. 그 외 설명은 쓰지 마.");
 
@@ -246,6 +277,53 @@ public class MathServiceImpl implements MathService {
         return prompt.toString();
     }
 
+    @Override
+    @Transactional
+    public MathResponseDTO.createParameterDto createParameter(Long mathId, Long templateId){
+
+        Math math=mathRepository.findById(mathId)
+                .orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        String typePrompt=generateTemplatePrompt(mathId,templateId);
+        String imageUrl=math.getImage();
+        String response;
+        try{
+            response = callOpenAIV2(typePrompt, imageUrl, 500);
+            System.out.println(response);
+        } catch (JsonProcessingException e) {
+            throw new TempHandler(JSON_PARSING_ERROR);
+        }
+        String extractedContent = extractContent(response);
+        MathResponseDTO.createParameterDto parameterDto = MathResponseDTO.createParameterDto.builder()
+                .deploy(extractedContent)
+                .build();
+
+
+        Template template= templateRepository.findById(templateId)
+                .orElseThrow(()-> new TempHandler(TEMPLATE_NOT_FOUND));
+
+        return parameterDto;
+
+
+    }
+
+    public String generateTemplatePrompt(Long mathId,Long templateId) {
+        StringBuilder prompt = new StringBuilder();
+        Math math=mathRepository.findById(mathId).orElseThrow(()->new TempHandler(MATH_NOT_FOUND));
+        String mathText=math.getProblem();
+        String mathType=math.getMathType().getTypeName();
+        Template template= templateRepository.findById(templateId).orElseThrow(()->new TempHandler(TEMPLATE_NOT_FOUND));
+        String gpt=template.getGpt();
+
+        prompt.append("문제:").append(mathText).append("\n")
+                .append("유형:").append(mathType).append("\n")
+                .append("1. 문제 텍스트와 유형은 위와 같아. \n")
+                .append("1. 문제 텍스트와 유형은 위와 같아. \n")
+                .append("2. 템플릿 어떤식으로 해야하는지 보내줄게.\n").append(gpt).append("\n\n")
+                .append("3. 만약 entity_type에 값이 없다면 \"grape\"로 해줘. \n")
+                .append("지금부터 이미지를 분석하고 너의 답은 정확히 내가 제시한 문자열형식으로만 추출해. { \"entity1\": 6, \"entity2\": 2, \"entity_type\": \"peach\" }");
+
+        return prompt.toString();
+    }
     public String callOpenAIV2(String prompt, String imageUrl, int maxTokens) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -269,7 +347,7 @@ public class MathServiceImpl implements MathService {
             imageContent.put("type", "image_url");
 
             Map<String, String> imageUrlMap = new HashMap<>();
-            imageUrlMap.put("url", imageUrl); // 👈 실제 이미지 URL
+            imageUrlMap.put("url", imageUrl);
             imageContent.put("image_url", imageUrlMap);
 
             contentList.add(imageContent);
@@ -344,8 +422,6 @@ public class MathServiceImpl implements MathService {
             return "Error: " + e.getMessage();
         }
     }
-
-
 
     private String extractContent(String gptResponseJson) {
         try {

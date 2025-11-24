@@ -47,7 +47,7 @@ public class SecurityConfig {
                 // 3. HTTP 요청에 대한 인가 규칙 설정
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/**","/users/login/**","/users/signup/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // 특정 경로는 모두 허용
+                        .requestMatchers("/**", "/users/login/**", "/users/signup/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // 특정 경로는 모두 허용
                         .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
                 )
 
@@ -83,22 +83,50 @@ public class SecurityConfig {
         }
 
         @Override
+        protected boolean shouldNotFilter(HttpServletRequest request) {
+            String path = request.getRequestURI();
+
+            return path.startsWith("/swagger-ui")
+                    || path.startsWith("/v3/api-docs")
+                    || path.startsWith("/swagger-resources")
+                    || path.startsWith("/webjars")
+                    || path.startsWith("/users/login")
+                    || path.startsWith("/users/signup")
+                    || path.startsWith("/temp/test")
+                    || path.startsWith("/temp/gpt")
+                    || path.equals("/");
+        }
+
+        @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
             // 헤더에서 "Authorization"을 찾아 Bearer 토큰을 추출
             String token = getTokenFromRequest(request);
 
-            // 토큰이 유효한 경우
-            if (token != null && jwtUtil.validateToken(token)) {
-                // 토큰에서 userId(사용자 식별자)를 추출
+            try {
+                //토큰 없으면 401
+                if (token == null) {
+                    setErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_MISSING");
+                    return;
+                }
+
+                //토큰 검증 실패 → 401
+                if (!jwtUtil.validateToken(token)) {
+                    setErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID");
+                    return;
+                }
+
+                //토큰 OK → Authentication 설정
                 String userId = jwtUtil.getUserIdFromToken(token);
-                // 인증 객체 생성 (비밀번호는 null, 권한 정보도 우선 null)
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userId, null, null);
-                // SecurityContext에 인증 정보 저장
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                filterChain.doFilter(request, response);
+
+            } catch (Exception e) {
+                setErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_ERROR");
             }
-            // 다음 필터로 요청 전달
-            filterChain.doFilter(request, response);
         }
 
         private String getTokenFromRequest(HttpServletRequest request) {
@@ -110,4 +138,15 @@ public class SecurityConfig {
         }
     }
 
+    private static void setErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String body = "{ \"status\": " + status + ", \"message\": \"" + message + "\" }";
+        response.getWriter().write(body);
+    }
+
+
 }
+

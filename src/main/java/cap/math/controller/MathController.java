@@ -45,7 +45,7 @@ public class MathController {
 
     @PostMapping(value="/types",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary="유형 분류 API",
-            description="수학문제 사진 업로드 시, GPT로부터 문제의 유형 번호를 받아옵니다.")
+            description="수학문제 사진 업로드 시, GPT로부터 문제의 유형 번호와 문제 텍스트를 받아옵니다.")
     public ApiResponse<MathResponseDTO.crerateMathTypeDto> createMathType(@AuthenticationPrincipal String userName, @RequestParam("imageFile") MultipartFile image){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
@@ -67,10 +67,10 @@ public class MathController {
     @PostMapping(value="/parameters/{mathId}")
     @Operation(summary="파라미터 추출 API",
             description="LLM으로부터 사용자가 선택한 템플릿에 맞는 파라미터를 추출합니다.")
-    public ApiResponse<String> createParameter(@AuthenticationPrincipal String userName, @PathVariable Long mathId, @RequestParam Long templateId){
+    public ApiResponse<MathResponseDTO.createParameterDto> createParameter(@AuthenticationPrincipal String userName, @PathVariable Long mathId, @RequestParam Long templateId){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
-        String parameter= templateService.createParameter(mathId, templateId);
+        MathResponseDTO.createParameterDto parameter= mathService.createParameter(mathId, templateId);
 
          return ApiResponse.onSuccess(parameter);
     }
@@ -118,10 +118,10 @@ public class MathController {
 
     @GetMapping(value="/new")
     @Operation(summary="새로운 문제 조회 API")
-    public ApiResponse<MathResponseDTO.crerateMathDto> getNew(@AuthenticationPrincipal String userName){
+    public ApiResponse<MathResponseDTO.crerateMathTypeDto> getNew(@AuthenticationPrincipal String userName){
         User user=userRepository.findByName(userName)
                 .orElseThrow(()-> new TempHandler(USER_NOT_FOUND));
-        MathResponseDTO.crerateMathDto response=mathService.getNew(user.getId());
+        MathResponseDTO.crerateMathTypeDto response=mathService.getNew(user.getId());
         return ApiResponse.onSuccess(response);
     }
 

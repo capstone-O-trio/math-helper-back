@@ -18,6 +18,12 @@ public class Template extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String templateName;
+
+    private Boolean isPossible;
+
+    private String templateImage;
+
     //@Column(length = 5000)
     @Lob
     @Column(columnDefinition = "TEXT")
