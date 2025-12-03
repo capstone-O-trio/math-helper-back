@@ -24,6 +24,8 @@ public class Math extends BaseEntity {
 
     private String problem;
 
+    private String answerScript;
+
     private String wrongAnswer1;
 
     private String wrongAnswer2;

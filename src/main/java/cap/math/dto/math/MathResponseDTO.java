@@ -38,6 +38,7 @@ public class MathResponseDTO {
         private String problem;
         private String type_name;
         private String answer;
+        private String answerScript;
         private String wrongAnswer1;
         private String wrongAnswer2;
         private String extractedImage;
@@ -92,6 +93,7 @@ public class MathResponseDTO {
         private Long mathId;
         private String image;
         private String answer;
+        private String answerScript;
         private String wrongAnswer1;
         private String wrongAnswer2;
     }
