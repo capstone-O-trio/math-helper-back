@@ -93,6 +93,7 @@ public class MathResponseDTO {
         private Long mathId;
         private String image;
         private String answer;
+        private String answerScript;
         private String wrongAnswer1;
         private String wrongAnswer2;
     }

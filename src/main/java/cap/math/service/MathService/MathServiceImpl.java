@@ -187,6 +187,7 @@ public class MathServiceImpl implements MathService {
         return MathResponseDTO.getAnswerDto.builder()
                 .image(math.getImage())
                 .answer(math.getAnswer())
+                .answerScript(math.getAnswerScript())
                 .wrongAnswer1(math.getWrongAnswer1())
                 .wrongAnswer2(math.getWrongAnswer2())
                 .mathId(mathId)
