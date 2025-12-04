@@ -54,6 +54,7 @@ public class TemplateServiceImpl implements TemplateService {
                     return MathResponseDTO.singleTemplateDto.builder()
                             .templateId(template.getId())
                             .templateName(template.getTemplateName())
+                            .templateScript(template.getTemplateScript())
                             .templateImage(template.getTemplateImage())
                             .isPossible(template.getIsPossible())// 필요 시 더 추가
                             .build();
