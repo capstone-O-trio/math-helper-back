@@ -20,6 +20,10 @@ public class MathType extends BaseEntity {
 
     private String typeName;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String  typeScript;
+
     //@Column(length = 5000)
     @Lob
     @Column(columnDefinition = "TEXT")
