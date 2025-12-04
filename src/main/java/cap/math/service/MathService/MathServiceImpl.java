@@ -220,6 +220,7 @@ public class MathServiceImpl implements MathService {
                     return MathResponseDTO.crerateMathTypeDto.builder()
                             .mathId(math.getId())
                             .image(math.getImage())
+                            .typeScript(math.getMathType().getTypeScript())
                             .mathTypeDto(typeDto)
                             .build();
 
