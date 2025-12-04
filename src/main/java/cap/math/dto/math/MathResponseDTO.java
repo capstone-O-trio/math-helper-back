@@ -28,6 +28,7 @@ public class MathResponseDTO {
     public static class crerateMathTypeDto{
         private Long mathId;
         private String image;
+        private String typeScript;
         private mathTypeDto mathTypeDto;
     }
     @Builder
@@ -59,6 +60,7 @@ public class MathResponseDTO {
     public static class singleTemplateDto{
         private Long templateId;
         private String templateName;
+        private String templateScript;
         private Boolean isPossible;
         private String templateImage;
     }

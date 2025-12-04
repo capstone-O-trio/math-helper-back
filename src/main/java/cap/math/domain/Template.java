@@ -20,6 +20,10 @@ public class Template extends BaseEntity {
 
     private String templateName;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String  templateScript;
+
     private Boolean isPossible;
 
     private String templateImage;

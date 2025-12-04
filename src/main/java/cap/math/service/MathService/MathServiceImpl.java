@@ -141,6 +141,7 @@ public class MathServiceImpl implements MathService {
         MathResponseDTO.crerateMathTypeDto typeResponse=MathResponseDTO.crerateMathTypeDto.builder()
                 .mathId(math.getId())
                 .image(imageUrl)
+                .typeScript(mathType.getTypeScript())
                 .mathTypeDto(typeDto)
                 .build();
 
