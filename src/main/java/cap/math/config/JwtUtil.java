@@ -15,7 +15,7 @@ import java.util.Map;
 public class JwtUtil {
 
     private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-    private static final long ACCESS_TOKEN_VALIDITY = 1000 * 60 * 15;   // 15 minutes
+    private static final long ACCESS_TOKEN_VALIDITY = 1000 * 60 * 60 * 2;   // 2 hours
     private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 7; // 7 days
 
     public String generateAccessToken(String memberId) {
