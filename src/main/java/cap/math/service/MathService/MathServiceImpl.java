@@ -236,6 +236,7 @@ public class MathServiceImpl implements MathService {
                 .map(MathType::getGpt) // 각 객체에서 gpt 필드 추출
                 .collect(Collectors.toList());
         prompt.append("이 이미지는 초등학교 1학년 수준의 수학 문제 사진이야.\n")
+                .append("만약 이미지 속 문제가 여러개라면 가장 처음에 있는 문제만 해줘. 나머지 문제는 버려도 돼.\n")
                 .append("1. 먼저 이미지를 자세히 보고, 문제를 스크립트 변환해줘. 문제 텍스트는 problem에 붙여줘.\n")
                 .append("2. 문제 텍스트와 문제 이미지를 보고 내가 보낸 유형 리스트 중에 해당하는 유형 이름을 추출해서 type_name에 붙여줘.\n")
                 .append("3. JSON은 반드시 아래 예시 형식으로 출력하고, 설명이나 추가 문장은 절대 쓰지 마.\n")
