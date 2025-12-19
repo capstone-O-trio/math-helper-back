@@ -201,7 +201,7 @@ public class MathServiceImpl implements MathService {
     public MathResponseDTO.crerateMathTypeDto getNew(Long userId) {
         return mathRepository.findFirstByUserIdAndIsCheckedFalseOrderByCreatedAtDesc(userId)
                 .map(math -> {
-                    // ProbExtractImage 조회
+                    // ProbExtractImage 조회1
                     ProbExtractImage extractImage =
                             probExtractImageRepository.findByMathId(math.getId())
                                     .orElse(null);
